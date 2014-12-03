@@ -1,0 +1,33 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+mainClassName = 'me.tillmanns.javacomplete.JavaComplete'
+version =  '0.1.0'
+
+dependencies {
+    compile files('libs/javaparser-1.0.8.jar')
+    compile files('libs/javassist.jar')
+    compile files('libs/tinylog.jar')
+    compile files('libs/junixsocket-1.3.jar')
+    compile files('libs/javax.json-1.0.jar')
+}
+
+jar {
+    baseName = 'javacomplete'
+
+    manifest {
+        attributes 'Main-Class': 'me.tillmanns.javacomplete.JavaComplete'
+    }
+}
+
+//create a single Jar with all dependencies
+task fatJar(type: Jar) {
+	manifest {
+        attributes 'Implementation-Title': 'Java Completion Backend',  
+        	'Implementation-Version': version,
+        	'Main-Class': 'me.tillmanns.javacomplete.JavaComplete'
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
