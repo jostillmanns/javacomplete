@@ -45,8 +45,13 @@ public class JavaCompleteCompilationUnit {
 	return c.getPackage().getName().toString();
     }
 
-    public List<ImportDeclaration> getImports() {
-	return c.getImports();
+    public ArrayList<ImportDeclaration> getImports() {
+	if (c.getImports() == null) {
+	    return new ArrayList<ImportDeclaration>();
+	}
+	ArrayList<ImportDeclaration> imports = new ArrayList<ImportDeclaration>();
+	imports.addAll(c.getImports());
+	return imports;
     }
 
     public ArrayList<MethodDeclaration> getMethods() {
