@@ -111,7 +111,7 @@ public class Complete {
 	    typeNode = pool.getOrNull("java.lang." + typeName);
 	}
 
-	if (typeNode == null) {
+	if (typeNode == null && cu.getPackage() != null) {
 	    typeNode = pool.getOrNull(String.format("%s.%s", cu.getPackage(), typeName));
 	}
 
