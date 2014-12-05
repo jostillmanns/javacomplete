@@ -54,9 +54,9 @@ public class Complete {
 	    out.flush();
 
 	} catch (ParseException e) {
-	    Logger.debug("parseexception");
+	    Logger.trace(e);
 	} catch (NullPointerException e) {
-	    Logger.debug("nullpointerexcpetion");
+	    Logger.trace(e);
 	} finally {
 	    out.write("".getBytes());
 	    in.close();
