@@ -42,6 +42,9 @@ public class JavaCompleteCompilationUnit {
     }
 
     public String getPackage() {
+	if (c.getPackage() == null) {
+	    return null;
+	}
 	return c.getPackage().getName().toString();
     }
 
