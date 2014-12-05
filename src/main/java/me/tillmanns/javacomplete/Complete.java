@@ -33,15 +33,20 @@ import java.nio.charset.Charset;
 
 import java.net.Socket;
 
+
 public class Complete {
     Request request;
     ClassPool pool;
+    private static final String path = "JAVACOMPLETEPATH";
 
     public Complete(Request request, Socket socket) throws Exception {
 	this.request = request;
 	String completionList = "";
 	OutputStream out = null;
 	pool = ClassPool.getDefault();
+	String env = System.getenv(path);
+	if (env != null)
+	    pool.insertClassPath(System.getenv(path));
 
 	InputStream in = new ByteArrayInputStream(request.getBuffer().getBytes());
 
