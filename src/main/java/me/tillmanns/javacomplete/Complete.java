@@ -83,13 +83,11 @@ public class Complete {
 	expression = ExpressionParser.removeParenBody(request.getExpression());
 	expression = ExpressionParser.lastElement(expression);
 	expression = ExpressionParser.parse(expression);
+	Logger.debug(expression);
 	if (expression.length() == 0) {
 	    return tp.printLocalTypes(cu);
 	}
-
-	Logger.debug(expression);
 	String[] parts = expression.split("\\.");
-	Logger.debug(parts[0]);
 	parts[0] = ExpressionParser.parse(parts[0]);
 
 	ClassOrInterfaceType t = cu.getTypeOrNull(parts[0], request.getLine());
