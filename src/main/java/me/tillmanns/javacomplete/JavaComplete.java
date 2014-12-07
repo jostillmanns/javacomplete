@@ -28,7 +28,8 @@ class JavaComplete {
     private static final String API_CLEAN_IMPORTS = "cleanimports";
     private static final String API_ADD_IMPORT = "addimport";
 
-    private static final String path = "JAVACOMPLETEPATH";
+    public static final String ENV_CLASSPATH = "JAVACOMPLETEPATH";
+    public static final String ENV_JAVASRC = "JAVASRC";
 
     private ImportAdder adder;
 
@@ -88,9 +89,9 @@ class JavaComplete {
 	ClassPool pool;
 
 	pool = ClassPool.getDefault();
-	String env = System.getenv(path);
+	String env = System.getenv(ENV_CLASSPATH);
 	if (env != null)
-	    pool.insertClassPath(System.getenv(path));
+	    pool.insertClassPath(env);
 
 	socket = server.accept();
 	Logger.info("acceppted new client");
