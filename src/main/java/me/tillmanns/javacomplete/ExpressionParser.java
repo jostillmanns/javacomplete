@@ -51,8 +51,12 @@ public class ExpressionParser {
 	return expression;
     }
 
-    public static String lastElement(String expression) {
-	String[] elements = expression.split(",");
+    public static String lastElement(String expression, String delimitor) {
+	String[] elements = expression.split(delimitor);
 	return elements[elements.length-1].trim();
+    }
+
+    public static String lastElement(String expression) {
+	return lastElement(expression, ",");
     }
 }
