@@ -11,35 +11,77 @@ import java.net.URL;
 
 import java.util.zip.ZipFile;
 import java.util.zip.ZipEntry;
+import java.util.jar.JarFile;
+import java.util.jar.JarEntry;
 import java.util.Enumeration;
 import java.util.HashMap;
 
 import org.pmw.tinylog.Logger;
 
 class ImportAdder {
-    private static String EXT_JAVA = "java";
     HashMap classmap;
 
+    public static final String EXT_JAVA = "java";
+    public static final String EXT_CLASS = "class";
+    public static final String PATH_DELIM = "/";
+
     public ImportAdder() throws FileNotFoundException, IOException {
-	String javasrc = System.getenv("JAVASRC");
+	classmap = new HashMap();
+	initStdLib();
+	initJars();
+    }
+
+    private void initJars() throws FileNotFoundException, IOException{
+	String completePath = System.getenv(JavaComplete.ENV_CLASSPATH);
+	if (completePath == null) {
+	    return;
+	}
+
+	JarFile jarFile;
+	Enumeration<? extends JarEntry> entries;
+	String name;
+	String path;
+
+	for (String s:completePath.split(":")) {
+	    if (!s.endsWith(".jar")) {
+		continue;
+	    }
+	    jarFile = new JarFile(s);
+	    entries = jarFile.entries();
+
+	    while(entries.hasMoreElements()) {
+		JarEntry entry = entries.nextElement();
+		if (!entry.getName().endsWith(EXT_CLASS))
+		    continue;
+
+		name = ExpressionParser.lastElement(removeExt(entry.getName(), EXT_CLASS), PATH_DELIM);
+		path = entry.getName().replaceAll(PATH_DELIM, ".");
+		path = removeExt(path, EXT_CLASS);
+		classmap.put(name, path);
+	    }
+
+	}
+    }
+
+    private void initStdLib() throws FileNotFoundException, IOException{
+	String javasrc = System.getenv(JavaComplete.ENV_JAVASRC);
 	if (javasrc == null) {
 	    return;
 	}
 	ZipFile zipFile = new ZipFile(javasrc);
 
 	Enumeration<? extends ZipEntry> entries = zipFile.entries();
-	classmap = new HashMap();
 
 	String name;
 	String path;
 	while(entries.hasMoreElements()) {
 	    ZipEntry entry = entries.nextElement();
 
-	    if (!entry.getName().endsWith(".java"))
+	    if (!entry.getName().endsWith(EXT_JAVA))
 		continue;
 
-	    name = ExpressionParser.lastElement(removeExt(entry.getName(), EXT_JAVA), "/");
-	    path = entry.getName().replaceAll("/", ".");
+	    name = ExpressionParser.lastElement(removeExt(entry.getName(), EXT_JAVA), PATH_DELIM);
+	    path = entry.getName().replaceAll(PATH_DELIM, ".");
 	    path = removeExt(path, EXT_JAVA);
 	    classmap.put(name, path);
 	}
