@@ -68,7 +68,7 @@ class JavaComplete {
 
 	switch(request.getApicall()) {
 	case API_COMPLETE:
-	    new Complete(request, socket);	    
+	    new Complete(request, socket, pool);
 	    break;
 
 	case API_CLEAN_IMPORTS:
