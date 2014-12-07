@@ -37,16 +37,12 @@ import java.net.Socket;
 public class Complete {
     Request request;
     ClassPool pool;
-    private static final String path = "JAVACOMPLETEPATH";
 
-    public Complete(Request request, Socket socket) throws Exception {
+    public Complete(Request request, Socket socket, ClassPool pool) throws Exception {
 	this.request = request;
 	String completionList = "";
 	OutputStream out = null;
-	pool = ClassPool.getDefault();
-	String env = System.getenv(path);
-	if (env != null)
-	    pool.insertClassPath(System.getenv(path));
+	this.pool = pool;
 
 	InputStream in = new ByteArrayInputStream(request.getBuffer().getBytes());
 
