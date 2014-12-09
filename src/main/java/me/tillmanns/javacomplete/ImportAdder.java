@@ -15,6 +15,7 @@ import java.util.jar.JarFile;
 import java.util.jar.JarEntry;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.ArrayList;
 
 import org.pmw.tinylog.Logger;
 
@@ -42,6 +43,7 @@ class ImportAdder {
 	String name;
 	String path;
 
+
 	for (String s:completePath.split(":")) {
 	    if (!s.endsWith(".jar")) {
 		continue;
@@ -57,10 +59,21 @@ class ImportAdder {
 		name = ExpressionParser.lastElement(removeExt(entry.getName(), EXT_CLASS), PATH_DELIM);
 		path = entry.getName().replaceAll(PATH_DELIM, ".");
 		path = removeExt(path, EXT_CLASS);
-		classmap.put(name, path);
+		put(name, path);
 	    }
-
 	}
+    }
+
+    private void put(String name, String path) {
+	ArrayList<String> vals;
+	if (classmap.get(name) != null) {
+	    vals = (ArrayList) classmap.get(name);
+	    vals.add(path);
+	    classmap.put(name, vals);
+	}
+	vals = new ArrayList<String>();
+	vals.add(path);
+	classmap.put(name, vals);
     }
 
     private void initStdLib() throws FileNotFoundException, IOException{
@@ -83,18 +96,23 @@ class ImportAdder {
 	    name = ExpressionParser.lastElement(removeExt(entry.getName(), EXT_JAVA), PATH_DELIM);
 	    path = entry.getName().replaceAll(PATH_DELIM, ".");
 	    path = removeExt(path, EXT_JAVA);
-	    classmap.put(name, path);
+	    put(name, path);
 	}
     }
 
     public void writePackage(Request request, Socket socket) throws Exception {
-	String fullyqualified;
+	ArrayList<String> fullyqualified;
 	String classname = request.getExpression();
 	OutputStream out = socket.getOutputStream();
 	out = socket.getOutputStream();
+	StringBuilder sb = new StringBuilder();
 	try {
-	    fullyqualified = classmap.get(request.getExpression()).toString();
-	    out.write(("1\n"+fullyqualified).getBytes());
+	    fullyqualified = (ArrayList) classmap.get(request.getExpression());
+	    sb.append(String.format("%s\n", fullyqualified.size()));
+	    for(String s:fullyqualified) {
+		sb.append(s+"\n");
+	    }
+	    out.write(sb.toString().getBytes());
 	} catch (NullPointerException e)  {
 	    Logger.debug("unable to insert import");
 	    out.write("0\n".getBytes());
