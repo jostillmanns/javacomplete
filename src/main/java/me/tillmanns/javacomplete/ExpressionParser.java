@@ -57,6 +57,7 @@ public class ExpressionParser {
     }
 
     public static String lastElement(String expression) {
-	return lastElement(expression, ",");
+	static String r = "\\*|/|\\%|\\+|-|<<|>>|<|>|<=|=>|instanceof|==|\\!=|&|\\^|\\||&&|\\|\\||\\?:";
+	return lastElement(expression, r);
     }
 }
