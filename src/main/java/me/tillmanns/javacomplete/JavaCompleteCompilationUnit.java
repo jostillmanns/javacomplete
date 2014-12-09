@@ -32,12 +32,14 @@ import japa.parser.ast.type.PrimitiveType;
 // Ast statements
 import japa.parser.ast.stmt.BlockStmt;
 
+import japa.parser.ParseException;
+
 import org.pmw.tinylog.Logger;
 
 public class JavaCompleteCompilationUnit {
     CompilationUnit c;
 
-    public JavaCompleteCompilationUnit(InputStream in) throws Exception {
+    public JavaCompleteCompilationUnit(InputStream in) throws ParseException {
 	    c = JavaParser.parse(in);
     }
 
