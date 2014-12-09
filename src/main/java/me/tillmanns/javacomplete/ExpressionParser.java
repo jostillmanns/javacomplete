@@ -30,7 +30,6 @@ public class ExpressionParser {
 
 	    result = result + s.charAt(i);
 	}
-	
 	return result.replaceAll("(\\))", "()");
     }
 
@@ -57,7 +56,13 @@ public class ExpressionParser {
     }
 
     public static String lastElement(String expression) {
-	static String r = "\\*|/|\\%|\\+|-|<<|>>|<|>|<=|=>|instanceof|==|\\!=|&|\\^|\\||&&|\\|\\||\\?:";
-	return lastElement(expression, r);
+	String r = "\\*|/|\\%|\\+|-|<<|>>|<|>|<=|=>|instanceof|==|\\!=|&|\\^|\\||&&|\\|\\||\\?:|,";
+	String[] elements = expression.split(r);
+	if (elements.length > 2) {
+	    expression = expression.replaceAll(String.format("^%s", elements[0]), "");
+	    expression = expression.replaceFirst(r, "");
+	    return lastElement(expression.trim());
+	}
+	return elements[elements.length-1].trim();
     }
 }
