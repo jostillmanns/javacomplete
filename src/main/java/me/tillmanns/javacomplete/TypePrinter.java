@@ -1,3 +1,4 @@
+
 package me.tillmanns.javacomplete;
 
 import japa.parser.ast.expr.VariableDeclarationExpr;
@@ -73,6 +74,12 @@ class TypePrinter {
 		candidate = print(p);
 		if (candidate == null)
 		    continue;
+		completionList.append(candidate);
+		completionList.append("\n");
+	    }
+
+	    candidate = print(constructor);
+	    if (candidate != null) {
 		completionList.append(candidate);
 		completionList.append("\n");
 	    }
@@ -189,6 +196,26 @@ class TypePrinter {
 
 	type = typeToString(n.getType());
 	return String.format("%s!%s!", name, type);
+    }
+
+    public String print(ConstructorDeclaration n) {
+	name = n.getName();
+
+	if (prefix.length() > 0 && !name.startsWith(prefix))
+	    return null;
+
+	parameters = "(";
+
+	if (n.getParameters() != null) {
+	    for (Parameter p:n.getParameters()) {
+		parameters = String.format("%s%s", parameters, p.toString().split(" ")[0]);
+	    }
+	}
+
+	parameters = parameters.replaceAll(",+$", "");
+	parameters = String.format("%s)", parameters);
+
+	return String.format("%s!!%s", name, parameters);
     }
 
     public String print(MethodDeclaration n) {
