@@ -38,6 +38,8 @@ class Definition {
 
 	try {
 	    signature = complete.complete(in);
+	    if (signature.length() == 0)
+		throw new NotFoundException("unable to find signature");
 	    Logger.debug(signature);
 	    out.write(("1\n"+signature).getBytes());
 	} catch (ParseException e) {
