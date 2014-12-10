@@ -27,7 +27,7 @@ import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.CtField;
 import javassist.bytecode.AccessFlag;
-import java.util.ArrayList;
+import javassist.NotFoundException;
 
 import java.nio.charset.Charset;
 
@@ -37,6 +37,11 @@ import java.net.Socket;
 public class Complete {
     Request request;
     ClassPool pool;
+
+    public Complete(Request request, ClassPool pool) {
+	this.request = request;
+	this.pool = pool;
+    }
 
     public Complete(Request request, Socket socket, ClassPool pool) throws Exception {
 	this.request = request;
@@ -75,30 +80,8 @@ public class Complete {
 	return counter;
     }
 
-    private String complete(InputStream in) throws Exception {
-	JavaCompleteCompilationUnit cu = new JavaCompleteCompilationUnit(in);
-	TypePrinter tp = new TypePrinter(request);
-	String expression;
-
-	expression = ExpressionParser.removeParenBody(request.getExpression());
-	expression = ExpressionParser.lastElement(expression);
-	expression = ExpressionParser.parse(expression);
-	Logger.debug(expression);
-	if (expression.length() == 0) {
-	    return tp.printLocalTypes(cu);
-	}
-	String[] parts = expression.split("\\.");
-	parts[0] = ExpressionParser.parse(parts[0]);
-
-	ClassOrInterfaceType t = cu.getTypeOrNull(parts[0], request.getLine());
-	String typeName;
+    public CtClass getInitialTypeOrNull(JavaCompleteCompilationUnit cu, String typeName) {
 	CtClass typeNode = null;
-
-	if (t != null) {
-	     typeName = t.getName();
-	} else {
-	    typeName = parts[0];
-	}
 
 	for (ImportDeclaration i:cu.getImports()) {
 	    if (!i.getName().getName().equals(typeName))
@@ -117,6 +100,36 @@ public class Complete {
 	if (typeNode == null) {
 	    typeNode = pool.getOrNull(typeName);
 	}
+
+	return typeNode;
+    }
+
+
+    public String complete(InputStream in) throws NotFoundException, ParseException {
+	JavaCompleteCompilationUnit cu = new JavaCompleteCompilationUnit(in);
+	TypePrinter tp = new TypePrinter(request);
+	String expression;
+
+	expression = ExpressionParser.removeParenBody(request.getExpression());
+	expression = ExpressionParser.lastElement(expression);
+	expression = ExpressionParser.parse(expression);
+	if (expression.length() == 0) {
+	    return tp.printLocalTypes(cu);
+	}
+
+	String[] parts = expression.split("\\.");
+	parts[0] = ExpressionParser.parse(parts[0]);
+
+	ClassOrInterfaceType t = cu.getTypeOrNull(parts[0], request.getLine());
+	String typeName;
+
+	if (t != null) {
+	    typeName = t.getName();
+	} else {
+	    typeName = parts[0];
+	}
+
+	CtClass typeNode = getInitialTypeOrNull(cu, typeName);
 
 	if (typeNode == null) {
 	    return "";
