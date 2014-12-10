@@ -21,15 +21,8 @@ import javassist.NotFoundException;
 import org.pmw.tinylog.Logger;
 
 class Definition {
-    Request request;
-    Socket socket;
-    ClassPool pool;
-    JavaCompleteCompilationUnit cu;
 
     public Definition(Request request, Socket socket, ClassPool pool) throws IOException {
-	this.request = request;
-	this.socket = socket;
-	this.pool = pool;
 	OutputStream out;
 	out = socket.getOutputStream();
 	InputStream in = new ByteArrayInputStream(request.getBuffer().getBytes());
@@ -41,7 +34,7 @@ class Definition {
 	    if (signature.length() == 0)
 		throw new NotFoundException("unable to find signature");
 	    Logger.debug(signature);
-	    out.write(("1\n"+signature).getBytes());
+	    out.write(String.format("%s\n%s", signature.split("\n").length, signature).getBytes());
 	} catch (ParseException e) {
 	    Logger.debug("parseexception, unable to get definition");
 	    out.write("0\n".getBytes());
