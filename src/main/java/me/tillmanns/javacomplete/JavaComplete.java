@@ -27,6 +27,7 @@ class JavaComplete {
     private static final String API_COMPLETE = "complete";
     private static final String API_CLEAN_IMPORTS = "cleanimports";
     private static final String API_ADD_IMPORT = "addimport";
+    private static final String API_DEFINITION = "definition";
 
     public static final String ENV_CLASSPATH = "JAVACOMPLETEPATH";
     public static final String ENV_JAVASRC = "JAVASRC";
@@ -113,6 +114,9 @@ class JavaComplete {
 		break;
 
 	    adder.writePackage(request, socket);
+
+	case API_DEFINITION:
+	    new Definition(request, socket, pool);
 
 	default:
 	    break;
