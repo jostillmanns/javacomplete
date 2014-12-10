@@ -1,4 +1,3 @@
-
 package me.tillmanns.javacomplete;
 
 import japa.parser.ast.expr.VariableDeclarationExpr;
@@ -37,6 +36,15 @@ class TypePrinter {
 	this.prefix = request.getPrefix();
     }
 
+    private StringBuilder append(String candidate, StringBuilder sb) {
+	if (sb.indexOf(candidate) != -1)
+	    return sb;
+
+	sb.append(candidate);
+	sb.append("\n");
+	return sb;
+    }
+
     public String printLocalTypes(JavaCompleteCompilationUnit cu) {
 	StringBuilder completionList = new StringBuilder();
 	MethodDeclaration method = cu.getMethodOrNull(request.getLine());
@@ -48,16 +56,14 @@ class TypePrinter {
 		candidate = print(vexpr);
 		if (candidate == null)
 		    continue;
-		completionList.append(candidate);
-		completionList.append("\n");
+		completionList = append(candidate, completionList);
 	    }
 
 	    for (Parameter p:cu.getParameters(method)) {
 		candidate = print(p);
 		if (candidate == null)
 		    continue;
-		completionList.append(candidate);
-		completionList.append("\n");
+		completionList = append(candidate, completionList);
 	    }
 	}
 
@@ -66,22 +72,19 @@ class TypePrinter {
 		candidate = print(vexpr);
 		if (candidate == null)
 		    continue;
-		completionList.append(candidate);
-		completionList.append("\n");
+		completionList = append(candidate, completionList);
 	    }
 
 	    for (Parameter p:cu.getParameters(constructor)) {
 		candidate = print(p);
 		if (candidate == null)
 		    continue;
-		completionList.append(candidate);
-		completionList.append("\n");
+		completionList = append(candidate, completionList);
 	    }
 
 	    candidate = print(constructor);
 	    if (candidate != null) {
-		completionList.append(candidate);
-		completionList.append("\n");
+		completionList = append(candidate, completionList);
 	    }
 	}
 
@@ -89,31 +92,27 @@ class TypePrinter {
 	    candidate = print(i);
 	    if (candidate == null)
 		continue;
-	    completionList.append(print(i));
-	    completionList.append("\n");
+	    completionList = append(candidate, completionList);
 	}
 
 	for (MethodDeclaration m:cu.getMethods()) {
 	    candidate = print(m);
 	    if (candidate == null)
 		continue;
-	    completionList.append(candidate);
-	    completionList.append("\n");
+	    completionList = append(candidate, completionList);
 	}
 
 	for (FieldDeclaration f:cu.getFields()) {
 	    candidate = print(f);
 	    if (candidate == null)
 		continue;
-	    completionList.append(candidate);
-	    completionList.append("\n");
+	    completionList = append(candidate, completionList);
 	}
 
 	for (String i:packageTypes()) {
 	    if (!i.startsWith(request.getPrefix()))
 		continue;
-	    completionList.append(String.format("%s!!", i));
-	    completionList.append("\n");
+	    completionList = append(String.format("%s!!", i), completionList);
 	}
 
 	return completionList.toString();
