@@ -1,6 +1,9 @@
 package me.tillmanns.javacomplete;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 import org.pmw.tinylog.Logger;
 import org.pmw.tinylog.Configurator;
@@ -22,6 +25,7 @@ import org.newsclub.net.unix.AFUNIXServerSocket;
 import java.net.Socket;
 
 import javassist.ClassPool;
+import javassist.NotFoundException;
 
 class JavaComplete {
     private static final String API_COMPLETE = "complete";
@@ -33,9 +37,10 @@ class JavaComplete {
     public static final String ENV_JAVASRC = "JAVASRC";
 
     private ImportAdder adder;
+    private ClassPool pool;
+    private HashMap classMap;
 
     public static void main(String[] args) {
-
 	Configurator.defaultConfig()
 	    .writer(new ConsoleWriter())
 	    .level(Level.TRACE)
@@ -46,11 +51,45 @@ class JavaComplete {
 	jc.initCompleteLoop();
     }
 
+    private void initClassPool() throws NotFoundException {
+	String reference = System.getenv(ENV_CLASSPATH);
+	pool = ClassPool.getDefault();
+	classMap = new HashMap();
+	for(String s:reference.split(":")) {
+	    File f = new File(s);
+	    classMap.put(s, f.lastModified());
+	    pool.appendClassPath(s);
+	}
+    }
+
+    private void updateClassPool() throws NotFoundException {
+	Iterator i = classMap.entrySet().iterator();
+	while (i.hasNext()) {
+	    Entry pairs = (Entry)i.next();
+
+	    String name = (String)pairs.getKey();
+	    Long time = (Long)pairs.getValue();
+
+	    File f = new File(name);
+	    if (f.lastModified() == time)
+		continue;
+
+	    initClassPool();
+	    return;
+	}
+    }
+    
     public void initCompleteLoop() {
 
 	SocketHandler socketHandler = null;
 	AFUNIXServerSocket server = null;
 	adder = initImportAdder();
+	try {
+	    initClassPool();
+	} catch (NotFoundException e) {
+	    Logger.debug("unable to load classpool");
+	    return;
+	}
 
 	try {
 	    socketHandler = new SocketHandler();
@@ -87,9 +126,10 @@ class JavaComplete {
     private void acceptRequest(SocketHandler socketHandler, AFUNIXServerSocket server) throws Exception {
 	Socket socket;
 	Request request;
-	ClassPool pool;
+	// ClassPool pool;
 
-	pool = ClassPool.getDefault();
+	// pool = ClassPool.getDefault();
+	updateClassPool();
 	String env = System.getenv(ENV_CLASSPATH);
 	if (env != null)
 	    pool.insertClassPath(env);
