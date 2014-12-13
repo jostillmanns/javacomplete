@@ -2,21 +2,27 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#sec-1">1. an autocompletion daemon for the Java programming language</a></li>
-<li><a href="#sec-2">2. setup</a>
+<li><a href="#sec-1">1. An autocompletion daemon for the Java programming language</a></li>
+<li><a href="#sec-2">2. Builds</a></li>
+<li><a href="#sec-3">3. Setup</a>
 <ul>
-<li><a href="#sec-2-1">2.1. start the daemon</a></li>
-<li><a href="#sec-2-2">2.2. emacs setup</a></li>
+<li><a href="#sec-3-1">3.1. Start the daemon</a></li>
+<li><a href="#sec-3-2">3.2. Emacs setup</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
 
-# an autocompletion daemon for the Java programming language<a id="sec-1" name="sec-1"></a>
+# An autocompletion daemon for the Java programming language<a id="sec-1" name="sec-1"></a>
 
-The completion daemon provides ide like functionality. The set of
-features that are currently implemented:
+The completion daemon provides ide like functionality. Development
+is at a very early stage. The completion definitely can be improved and
+is likely not to work in some corner cases. Nevertheless I am
+already using the completion for development, so I think it's in a
+useable state.
+
+The following features are currently implemented:
 
 -   code completion
 -   method/field/variable signature lookup
@@ -27,7 +33,11 @@ planed features are
 -   removing unused imports
 -   &#x2026;
 
-# setup<a id="sec-2" name="sec-2"></a>
+# Builds<a id="sec-2" name="sec-2"></a>
+
+available on [tillmanns.me](http://www.tillmanns.me/)
+
+# Setup<a id="sec-3" name="sec-3"></a>
 
 The application currently holds dependencies on the following packages:
 
@@ -37,17 +47,17 @@ The application currently holds dependencies on the following packages:
 -   junixsocket [code.google.com/p/junixsocket/](https://code.google.com/p/junixsocket/)
 -   jsonp [jsonp.java.net/](https://jsonp.java.net/)
 
-I am planning to replace javaparser with the eclipse astparser in
-the long run (mostly to support java 8), but for now it serves me
+I am planning to replace javaparser with the eclipse astparser on
+the long run (mostly to support java 8) but for now it serves me
 well. To compile javacomplete with the provided gradle build file
-all those dependencies need to be saved to the libs/ dirctory in the
+all these dependencies need to be saved to the libs/ dirctory in the
 project root.
 
-## start the daemon<a id="sec-2-1" name="sec-2-1"></a>
+## Start the daemon<a id="sec-3-1" name="sec-3-1"></a>
 
 In order for the import feature to work with classes living in the
-standard library you have to set the JAVASRC environment
-variable pointing at the jdk source.
+standard library you have to set the JAVASRC environment variable
+pointing at the jdk source.
 
 Dependencies may be referenced using the JAVACOMPLETPATH variable
 (using a colon seperated list).
@@ -58,6 +68,6 @@ example call:
          JAVACOMPLETEPATH=build/libs/javacomplete-all-0.1.0.jar \
          java -jar build/libs/javacomplete-all-0.1.0.jar
 
-## emacs setup<a id="sec-2-2" name="sec-2-2"></a>
+## Emacs setup<a id="sec-3-2" name="sec-3-2"></a>
 
 using [github.com/jostillmanns/javacomplete.el](https://github.com/jostillmanns/javacomplete.el)
