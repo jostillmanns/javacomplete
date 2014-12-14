@@ -36,7 +36,7 @@ planed features are
 
 # Builds<a id="sec-2" name="sec-2"></a>
 
-available on [tillmanns.me](http://www.tillmanns.me/)
+available on [tillmanns.me](http://javacomplete.tillmanns.me/)
 
 # Setup<a id="sec-3" name="sec-3"></a>
 
