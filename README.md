@@ -6,8 +6,9 @@
 <li><a href="#sec-2">2. Builds</a></li>
 <li><a href="#sec-3">3. Setup</a>
 <ul>
-<li><a href="#sec-3-1">3.1. Start the daemon</a></li>
-<li><a href="#sec-3-2">3.2. Emacs setup</a></li>
+<li><a href="#sec-3-1">3.1. Junixsocket native lib</a></li>
+<li><a href="#sec-3-2">3.2. Start the daemon</a></li>
+<li><a href="#sec-3-3">3.3. Emacs setup</a></li>
 </ul>
 </li>
 </ul>
@@ -53,7 +54,19 @@ well. To compile javacomplete with the provided gradle build file
 all these dependencies need to be saved to the libs/ dirctory in the
 project root.
 
-## Start the daemon<a id="sec-3-1" name="sec-3-1"></a>
+## Junixsocket native lib<a id="sec-3-1" name="sec-3-1"></a>
+
+You can download the library files here:
+[junixsocket/downloads/list](https://code.google.com/p/junixsocket/downloads/list)
+
+Instructions on how to install can be found here:
+[junixsocket/wiki/GettingStarted](https://code.google.com/p/junixsocket/wiki/GettingStarted)
+
+You have to copy the .so files to the LIBRARY<sub>PATH</sub>, which is
+/opt/newsclub/lib-native by default. The easiest way to setup them
+is to use the default path.
+
+## Start the daemon<a id="sec-3-2" name="sec-3-2"></a>
 
 In order for the import feature to work with classes living in the
 standard library you have to set the JAVASRC environment variable
@@ -68,6 +81,6 @@ example call:
          JAVACOMPLETEPATH=build/libs/javacomplete-all-0.1.0.jar \
          java -jar build/libs/javacomplete-all-0.1.0.jar
 
-## Emacs setup<a id="sec-3-2" name="sec-3-2"></a>
+## Emacs setup<a id="sec-3-3" name="sec-3-3"></a>
 
 using [github.com/jostillmanns/javacomplete.el](https://github.com/jostillmanns/javacomplete.el)
