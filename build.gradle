@@ -4,12 +4,34 @@ apply plugin: 'application'
 mainClassName = 'me.tillmanns.javacomplete.JavaComplete'
 version =  '0.1.0'
 
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
 dependencies {
-    compile files('libs/javaparser-1.0.8.jar')
-    compile files('libs/javassist.jar')
-    compile files('libs/tinylog.jar')
-    compile files('libs/junixsocket-1.3.jar')
-    compile files('libs/javax.json-1.0.jar')
+    compile 'com.google.code.javaparser:javaparser:1.0.8'
+    compile 'org.javassist:javassist:3.18.0-GA'
+    compile 'org.tinylog:tinylog:1.0-rc-3'
+    compile 'org.glassfish:javax.json:1.0'
+    compile files('libs/junixsocket-1.3.jar') {
+        builtBy 'download_junixsocket'
+    }
+}
+
+task download_junixsocket {
+    ext.destFile = file('libs/junixsocket-1.3.jar')
+    outputs.file destFile
+    doLast {
+        mkdir('files')
+        mkdir('libs')
+        ant.get(src: 'https://junixsocket.googlecode.com/files/junixsocket-1.3-bin.tar.bz2', dest: 'files', skipexisting: 'true')
+        copy {
+            from tarTree('files/junixsocket-1.3-bin.tar.bz2').matching { include '**/junixsocket-1.3.jar' }.singleFile
+            into 'libs'
+            includeEmptyDirs = false
+        }
+    }
 }
 
 jar {
