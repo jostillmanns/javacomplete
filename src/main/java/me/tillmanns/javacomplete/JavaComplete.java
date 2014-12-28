@@ -99,7 +99,7 @@ class JavaComplete {
 		try {
 		    acceptRequest(socketHandler, server);
 		} catch (Exception e) {
-		    Logger.debug("could not complete at point: {0}", e);
+		    Logger.trace(e, "could not complete at point");
 		}
 	    }
 
@@ -131,8 +131,16 @@ class JavaComplete {
 	// pool = ClassPool.getDefault();
 	updateClassPool();
 	String env = System.getenv(ENV_CLASSPATH);
-	if (env != null)
-	    pool.insertClassPath(env);
+	if (env != null) {
+	    for(String s:env.split(":")) {
+		try {
+		    pool.insertClassPath(s);
+		} catch (NotFoundException e) {
+		    Logger.trace(e, "unable to use jar file: {0}", s);
+		}
+
+	    }
+	}
 
 	socket = server.accept();
 	Logger.info("acceppted new client");
