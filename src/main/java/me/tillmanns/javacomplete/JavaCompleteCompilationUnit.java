@@ -202,7 +202,7 @@ public class JavaCompleteCompilationUnit {
 		}
 		super.visit(n, arg);
 	    }
-	}	
+	}
 
 	if (m instanceof MethodDeclaration) {
 	    new VariableDeclarationExprVisitor().visit((MethodDeclaration) m, null);
@@ -211,7 +211,7 @@ public class JavaCompleteCompilationUnit {
 	if (m instanceof ConstructorDeclaration) {
 	    new VariableDeclarationExprVisitor().visit((ConstructorDeclaration) m, null);
 	}
-	
+
 	return arr;
     }
 
@@ -316,18 +316,18 @@ public class JavaCompleteCompilationUnit {
     }
 
     public ArrayList<FieldDeclaration> getFields() {
-    	final ArrayList<FieldDeclaration> arr = new ArrayList<FieldDeclaration>();
+	final ArrayList<FieldDeclaration> arr = new ArrayList<FieldDeclaration>();
 
-    	class FieldDeclarationVisitor extends VoidVisitorAdapter {
-    	    @Override
-    	    public void visit(FieldDeclaration n, Object arg) {
-    	    	arr.add(n);
-    	    	super.visit(n, arg);
-    	    }
-    	}
+	class FieldDeclarationVisitor extends VoidVisitorAdapter {
+	    @Override
+	    public void visit(FieldDeclaration n, Object arg) {
+		arr.add(n);
+		super.visit(n, arg);
+	    }
+	}
 
-    	new FieldDeclarationVisitor().visit(c, null);
-    	return arr;
+	new FieldDeclarationVisitor().visit(c, null);
+	return arr;
     }
 
     public TypeDeclaration getType() {
