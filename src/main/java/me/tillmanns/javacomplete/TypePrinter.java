@@ -119,24 +119,24 @@ class TypePrinter {
     }
 
     private ArrayList<String> packageTypes() {
-    	File file = request.getFile().getParentFile();
-    	ArrayList<String> types = new ArrayList<String>();
+	File file = request.getFile().getParentFile();
+	ArrayList<String> types = new ArrayList<String>();
 
-    	for(File f:file.listFiles()) {
-    	    if (f.isDirectory()) {
-    		continue;
-    	    }
+	for(File f:file.listFiles()) {
+	    if (f.isDirectory()) {
+		continue;
+	    }
 
-    	    if (!f.getName().endsWith(".java")) {
-    		continue;
-    	    }
+	    if (!f.getName().endsWith(".java")) {
+		continue;
+	    }
 
 	    if (f.getName().equals(String.format(".#%s", request.getFile().getName())))
 		continue;
 
-    	    types.add(f.getName().replaceAll("(\\.java)$", ""));
-    	}
-    	return types;
+	    types.add(f.getName().replaceAll("(\\.java)$", ""));
+	}
+	return types;
     }
 
     private String typeToString (Type n) {
@@ -157,7 +157,7 @@ class TypePrinter {
 	return String.format("%s", n.getType());
     }
 
-    public String print(VariableDeclarationExpr n) {
+    public CompletionCandidate getCandidate(VariableDeclarationExpr n) {
 	name = n.getVars().get(0).getId().getName();
 
 	if (prefix.length() > 0 && !name.startsWith(prefix))
@@ -165,7 +165,14 @@ class TypePrinter {
 
 	type = typeToString(n.getType());
 
-	return String.format("%s!%s!", name, type);
+	return new CompletionCandidate(name, type, null);
+    }
+
+    public String print(VariableDeclarationExpr n) {
+	CompletionCandidate c = getCandidate(n);
+	if (c == null)
+	    return null;
+	return c.print();
     }
 
     public String print(Parameter n) {
@@ -187,37 +194,51 @@ class TypePrinter {
 	return String.format("%s!!", name);
     }
 
-    public String print(FieldDeclaration n) {
+    public CompletionCandidate getCandidate(FieldDeclaration n) {
 	name = (n.getVariables().get(0).getId().getName());
 
 	if (prefix.length() > 0 && !name.startsWith(prefix))
 	    return null;
 
 	type = typeToString(n.getType());
-	return String.format("%s!%s!", name, type);
+	return new CompletionCandidate(name, type, null);
     }
 
-    public String print(ConstructorDeclaration n) {
+    public String print(FieldDeclaration n) {
+	CompletionCandidate c = getCandidate(n);
+	if (c == null)
+	    return null;
+	return c.print();
+    }
+
+    public CompletionCandidate getCandidate(ConstructorDeclaration n) {
 	name = n.getName();
 
 	if (prefix.length() > 0 && !name.startsWith(prefix))
 	    return null;
 
-	parameters = "(";
+	type = "";
+
+	ArrayList<String> parameters = new ArrayList<String>();
 
 	if (n.getParameters() != null) {
-	    for (Parameter p:n.getParameters()) {
-		parameters = String.format("%s%s", parameters, p.toString().split(" ")[0]);
+	    for(Parameter p:n.getParameters()) {
+		parameters.add(p.toString().split(" ")[0]);
 	    }
 	}
 
-	parameters = parameters.replaceAll(",+$", "");
-	parameters = String.format("%s)", parameters);
-
-	return String.format("%s!!%s", name, parameters);
+	return new CompletionCandidate(name, type, parameters);
     }
 
-    public String print(MethodDeclaration n) {
+    public String print(ConstructorDeclaration n) {
+	CompletionCandidate c = getCandidate(n);
+
+	if (c == null)
+	    return null;
+	return c.print();
+    }
+
+    public CompletionCandidate getCandidate(MethodDeclaration n) {
 	name = n.getName();
 
 	if (prefix.length() > 0 && !name.startsWith(prefix))
@@ -225,19 +246,22 @@ class TypePrinter {
 
 	type = typeToString(n.getType());
 
-	parameters = "(";
+	ArrayList<String> parameters = new ArrayList<String>();
 
 	if (n.getParameters() != null) {
 	    for(Parameter p:n.getParameters()) {
-
-		parameters = String.format("%s%s,", parameters, p.toString().split(" ")[0]);
+		parameters.add(p.toString().split(" ")[0]);
 	    }
 	}
 
-	parameters = parameters.replaceAll(",+$", "");
-	parameters = String.format("%s)", parameters);
+	return new CompletionCandidate(name, type, parameters);
+    }
 
-	return String.format("%s!%s!%s", name, type, parameters);
+    public String print(MethodDeclaration n) {
+	CompletionCandidate c = getCandidate(n);
+	if (c == null)
+	    return null;
+	return c.print();
     }
 
     public String printClassMembers(CtClass clazz) {
