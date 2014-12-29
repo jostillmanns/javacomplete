@@ -70,6 +70,7 @@ class ImportAdder {
 	    vals = (ArrayList) classmap.get(name);
 	    vals.add(path);
 	    classmap.put(name, vals);
+	    return;
 	}
 	vals = new ArrayList<String>();
 	vals.add(path);
