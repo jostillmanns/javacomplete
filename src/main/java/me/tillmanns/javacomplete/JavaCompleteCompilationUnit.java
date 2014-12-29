@@ -75,7 +75,7 @@ public class JavaCompleteCompilationUnit {
 	return arr;
     }
 
-    final ArrayList<ConstructorDeclaration> getConstructors() {
+    public ArrayList<ConstructorDeclaration> getConstructors() {
 	final ArrayList<ConstructorDeclaration> arr = new ArrayList<ConstructorDeclaration>();
 
 	class ConstructorVisitor extends VoidVisitorAdapter {
@@ -131,6 +131,13 @@ public class JavaCompleteCompilationUnit {
 	MethodVisitor mv = new MethodVisitor();
 	mv.visit(c, null);
 	return mv.m;
+    }
+
+    public ArrayList<BlockStmt> getBlockStatements(BodyDeclaration m) {
+	if (m instanceof MethodDeclaration)
+	    return getBlockStatements((MethodDeclaration)m);
+
+	return getBlockStatements((ConstructorDeclaration)m);
     }
 
     public ArrayList<BlockStmt> getBlockStatements(MethodDeclaration m) {
