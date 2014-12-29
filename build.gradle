@@ -12,25 +12,36 @@ repositories {
 dependencies {
     compile 'com.google.code.javaparser:javaparser:1.0.8'
     compile 'org.javassist:javassist:3.18.0-GA'
+
     compile 'org.tinylog:tinylog:1.0-rc-3'
     compile 'org.glassfish:javax.json:1.0'
     compile files('libs/junixsocket-1.3.jar') {
-        builtBy 'download_junixsocket'
+	builtBy 'download_junixsocket'
     }
+
+    //eclipse sources
+    // compile 'org.eclipse.core:contenttype:3.4.200-v20140207-1251'
+    compile 'org.eclipse.core:jobs:3.6.0-v20140424-0053'
+    compile 'org.eclipse.core:resources:3.3.0-v20070604'
+    compile 'org.eclipse.core:runtime:3.10.0-v20140318-2214'
+    compile 'org.eclipse.equinox:common:3.6.200-v20130402-1505'
+    compile 'org.eclipse.equinox:preferences:3.5.200-v20140224-1527'
+    compile 'org.eclipse.jdt:core:3.3.0-v_771'
+    compile 'org.eclipse.osgi:org.eclipse.osgi:3.7.1'
 }
 
 task download_junixsocket {
     ext.destFile = file('libs/junixsocket-1.3.jar')
     outputs.file destFile
     doLast {
-        mkdir('files')
-        mkdir('libs')
-        ant.get(src: 'https://junixsocket.googlecode.com/files/junixsocket-1.3-bin.tar.bz2', dest: 'files', skipexisting: 'true')
-        copy {
-            from tarTree('files/junixsocket-1.3-bin.tar.bz2').matching { include '**/junixsocket-1.3.jar' }.singleFile
-            into 'libs'
-            includeEmptyDirs = false
-        }
+	mkdir('files')
+	mkdir('libs')
+	ant.get(src: 'https://junixsocket.googlecode.com/files/junixsocket-1.3-bin.tar.bz2', dest: 'files', skipexisting: 'true')
+	copy {
+	    from tarTree('files/junixsocket-1.3-bin.tar.bz2').matching { include '**/junixsocket-1.3.jar' }.singleFile
+	    into 'libs'
+	    includeEmptyDirs = false
+	}
     }
 }
 
@@ -38,18 +49,24 @@ jar {
     baseName = 'javacomplete'
 
     manifest {
-        attributes 'Main-Class': 'me.tillmanns.javacomplete.JavaComplete'
+	attributes 'Main-Class': 'me.tillmanns.javacomplete.JavaComplete'
     }
 }
 
 //create a single Jar with all dependencies
 task fatJar(type: Jar) {
-	manifest {
-        attributes 'Implementation-Title': 'Java Completion Backend',  
-        	'Implementation-Version': version,
-        	'Main-Class': 'me.tillmanns.javacomplete.JavaComplete'
+    manifest {
+	attributes 'Implementation-Title': 'Java Completion Backend',
+	      'Implementation-Version': version,
+	      'Main-Class': 'me.tillmanns.javacomplete.JavaComplete'
     }
     baseName = project.name + '-all'
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-    with jar
+    from(configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) }) {
+	// remove all signature files
+	exclude "META-INF/*.SF"
+	exclude "META-INF/*.DSA"
+	exclude "META-INF/*.RSA"
+    } with jar
+    // from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    // with jar
 }
