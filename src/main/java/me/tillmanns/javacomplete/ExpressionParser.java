@@ -37,12 +37,12 @@ public class ExpressionParser {
 	for(Regexp p:Regexp.getValues()) {
 
 	    if (!expression.matches(p.getRegexp()))
-	    	continue;
+		continue;
 
 	    if (p.getId() == -1)
-	    	return "";
+		return "";
 
-	    Logger.debug("matches: {0}", p);
+	    Logger.debug("matches: {}", p);
 
 	    return expression.replaceAll(p.getRegexp(), String.format("$%s", p.getId()));
 	}
