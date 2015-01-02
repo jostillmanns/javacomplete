@@ -7,19 +7,6 @@ import java.io.File;
 import java.io.ByteArrayInputStream;
 import java.io.OutputStream;
 
-import japa.parser.ast.CompilationUnit;
-import japa.parser.ast.Node;
-import japa.parser.ast.ImportDeclaration;
-import japa.parser.ast.body.MethodDeclaration;
-import japa.parser.ast.expr.VariableDeclarationExpr;
-import japa.parser.ast.body.Parameter;
-import japa.parser.ast.body.FieldDeclaration;
-import japa.parser.ast.stmt.BlockStmt;
-import japa.parser.ast.type.ClassOrInterfaceType;
-import japa.parser.ast.type.ReferenceType;
-import japa.parser.ast.type.PrimitiveType;
-import japa.parser.ParseException;
-
 import org.pmw.tinylog.Logger;
 
 import javassist.ClassPool;
@@ -49,23 +36,18 @@ public class Complete {
 	OutputStream out = null;
 	this.pool = pool;
 
-	InputStream in = new ByteArrayInputStream(request.getBuffer().getBytes());
-
 	try {
-	    completionList = complete(in);
+	    completionList = complete(request.getBuffer());
 
 	    out = socket.getOutputStream();
 	    out.write((lines(completionList)+"\n").getBytes());
 	    out.write(completionList.getBytes());
 	    out.flush();
 
-	} catch (ParseException e) {
-	    Logger.trace(e);
 	} catch (NullPointerException e) {
 	    Logger.trace(e);
 	} finally {
 	    out.write("".getBytes());
-	    in.close();
 	    out.close();
 	}
     }
@@ -83,10 +65,12 @@ public class Complete {
     public CtClass getInitialTypeOrNull(JavaCompleteCompilationUnit cu, String typeName) {
 	CtClass typeNode = null;
 
-	for (ImportDeclaration i:cu.getImports()) {
-	    if (!i.getName().getName().equals(typeName))
+	for (CompletionCandidate i:cu.getImports()) {
+	    String name = i.getName();
+
+	    if (!name.equals(typeName))
 		continue;
-	    typeNode = pool.getOrNull(i.getName().toString());
+	    typeNode = pool.getOrNull(i.getType());
 	}
 
 	if (typeNode == null) {
@@ -105,7 +89,7 @@ public class Complete {
     }
 
 
-    public String complete(InputStream in) throws NotFoundException, ParseException {
+    public String complete(String in) throws NotFoundException {
 	JavaCompleteCompilationUnit cu = new JavaCompleteCompilationUnit(in);
 	TypePrinter tp = new TypePrinter(request);
 	String expression;
@@ -117,14 +101,17 @@ public class Complete {
 	    return tp.printLocalTypes(cu);
 	}
 
+
 	String[] parts = expression.split("\\.");
 	parts[0] = ExpressionParser.parse(parts[0]);
 
-	ClassOrInterfaceType t = cu.getTypeOrNull(parts[0], request.getLine());
+	Logger.debug("completing upon: {}", parts[0]);
+
+	String t = cu.getTypeOrNull(parts[0], request.getLine());
 	String typeName;
 
 	if (t != null) {
-	    typeName = t.getName();
+	    typeName = t;
 	} else {
 	    typeName = parts[0];
 	}
