@@ -14,7 +14,7 @@ class CompletionCandidate {
     }
 
     public String getName() {
-	return this.name;	
+	return this.name;
     }
 
     public String getType() {
