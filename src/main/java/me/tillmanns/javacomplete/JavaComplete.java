@@ -143,10 +143,8 @@ class JavaComplete {
 	}
 
 	socket = server.accept();
-	Logger.info("acceppted new client");
 
 	request = socketHandler.readSocket(socket);
-	Logger.debug(request.getApicall());
 
 	switch(request.getApicall()) {
 	case API_COMPLETE:
