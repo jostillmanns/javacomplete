@@ -1,16 +1,5 @@
 package me.tillmanns.javacomplete;
 
-import japa.parser.ast.expr.VariableDeclarationExpr;
-import japa.parser.ast.body.Parameter;
-import japa.parser.ast.body.FieldDeclaration;
-import japa.parser.ast.ImportDeclaration;
-import japa.parser.ast.body.MethodDeclaration;
-import japa.parser.ast.body.ConstructorDeclaration;
-import japa.parser.ast.type.ClassOrInterfaceType;
-import japa.parser.ast.type.PrimitiveType;
-import japa.parser.ast.type.ReferenceType;
-import japa.parser.ast.type.Type;
-
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
@@ -36,91 +25,62 @@ class TypePrinter {
 	this.prefix = request.getPrefix();
     }
 
-    private StringBuilder append(String candidate, StringBuilder sb) {
-	if (sb.indexOf(candidate) != -1)
-	    return sb;
+    public String print(CompletionCandidate v) {
+	if(prefix.length() > 0 && !v.getName().startsWith(prefix))
+	    return null;
 
-	sb.append(candidate);
-	sb.append("\n");
-	return sb;
+	return v.print();
     }
 
     public String printLocalTypes(JavaCompleteCompilationUnit cu) {
 	StringBuilder completionList = new StringBuilder();
-	MethodDeclaration method = cu.getMethodOrNull(request.getLine());
-	ConstructorDeclaration constructor = cu.getConstructorOrNull(request.getLine());
-	String candidate;
-
-	if (method != null) {
-	    for (VariableDeclarationExpr vexpr:cu.getVariables(method, request.getLine())) {
-		candidate = print(vexpr);
-		if (candidate == null)
-		    continue;
-		completionList = append(candidate, completionList);
-	    }
-
-	    for (Parameter p:cu.getParameters(method)) {
-		candidate = print(p);
-		if (candidate == null)
-		    continue;
-		completionList = append(candidate, completionList);
-	    }
-	}
-
-	if (constructor != null) {
-	    for (VariableDeclarationExpr vexpr:cu.getVariables(constructor, request.getLine())) {
-		candidate = print(vexpr);
-		if (candidate == null)
-		    continue;
-		completionList = append(candidate, completionList);
-	    }
-
-	    for (Parameter p:cu.getParameters(constructor)) {
-		candidate = print(p);
-		if (candidate == null)
-		    continue;
-		completionList = append(candidate, completionList);
-	    }
-
-	    candidate = print(constructor);
-	    if (candidate != null) {
-		completionList = append(candidate, completionList);
-	    }
-	}
-
-	for(ImportDeclaration i:cu.getImports()) {
-	    candidate = print(i);
-	    if (candidate == null)
+	for(CompletionCandidate i:cu.getImports()) {
+	    if (print(i) == null)
 		continue;
-	    completionList = append(candidate, completionList);
+	    completionList.append(print(i));
+	    completionList.append("\n");
 	}
 
-	for (MethodDeclaration m:cu.getMethods()) {
-	    candidate = print(m);
-	    if (candidate == null)
+	for(CompletionCandidate f:cu.getFields()) {
+	    if (print(f) == null)
 		continue;
-	    completionList = append(candidate, completionList);
+
+	    completionList.append(print(f));
+	    completionList.append("\n");
 	}
 
-	for (FieldDeclaration f:cu.getFields()) {
-	    candidate = print(f);
-	    if (candidate == null)
+	for(CompletionCandidate m:cu.getMethods()) {
+	    if (print(m) == null)
 		continue;
-	    completionList = append(candidate, completionList);
+	    completionList.append(print(m));
+	    completionList.append("\n");
 	}
 
-	for (String i:packageTypes()) {
-	    if (!i.startsWith(request.getPrefix()))
+	for(CompletionCandidate v:cu.getVariables()) {
+	    if (!(v.getScopeBegin() <= request.getLine() && request.getLine() <= v.getScopeEnd()))
 		continue;
-	    completionList = append(String.format("%s!!", i), completionList);
+
+	    if (print(v) == null)
+		continue;
+
+	    completionList.append(print(v));
+	    completionList.append("\n");
+	}
+
+	for (CompletionCandidate i:packageTypes()) {
+	    if (print(i) == null)
+		continue;
+
+	    completionList.append(print(i));
+	    completionList.append("\n");
 	}
 
 	return completionList.toString();
     }
 
-    private ArrayList<String> packageTypes() {
+    private ArrayList<CompletionCandidate> packageTypes() {
 	File file = request.getFile().getParentFile();
-	ArrayList<String> types = new ArrayList<String>();
+	ArrayList<CompletionCandidate> types = new ArrayList<CompletionCandidate>();
 
 	for(File f:file.listFiles()) {
 	    if (f.isDirectory()) {
@@ -134,134 +94,10 @@ class TypePrinter {
 	    if (f.getName().equals(String.format(".#%s", request.getFile().getName())))
 		continue;
 
-	    types.add(f.getName().replaceAll("(\\.java)$", ""));
+	    String name = f.getName().replaceAll("(\\.java)$", "");
+	    types.add(new CompletionCandidate(name, "", null));
 	}
 	return types;
-    }
-
-    private String typeToString (Type n) {
-	if (n instanceof ReferenceType)
-	    return typeToString((ReferenceType) n);
-
-	if (n instanceof PrimitiveType)
-	    return typeToString((PrimitiveType) n);
-
-	return "";
-    }
-
-    private String typeToString (ReferenceType n) {
-	return ((ClassOrInterfaceType) n.getType()).getName();
-    }
-
-    private String typeToString (PrimitiveType n) {
-	return String.format("%s", n.getType());
-    }
-
-    public CompletionCandidate getCandidate(VariableDeclarationExpr n) {
-	name = n.getVars().get(0).getId().getName();
-
-	if (prefix.length() > 0 && !name.startsWith(prefix))
-	    return null;
-
-	type = typeToString(n.getType());
-
-	return new CompletionCandidate(name, type, null);
-    }
-
-    public String print(VariableDeclarationExpr n) {
-	CompletionCandidate c = getCandidate(n);
-	if (c == null)
-	    return null;
-	return c.print();
-    }
-
-    public String print(Parameter n) {
-	name = ((Parameter) n).getId().getName();
-
-	if (prefix.length() > 0 && !name.startsWith(prefix))
-	    return null;
-
-	type = typeToString(n.getType());
-	return String.format("%s!%s!", name, type);
-    }
-
-    public String print(ImportDeclaration n) {
-	name = n.getName().getName();
-
-	if (prefix.length() > 0 && !name.startsWith(prefix))
-	    return null;
-
-	return String.format("%s!!", name);
-    }
-
-    public CompletionCandidate getCandidate(FieldDeclaration n) {
-	name = (n.getVariables().get(0).getId().getName());
-
-	if (prefix.length() > 0 && !name.startsWith(prefix))
-	    return null;
-
-	type = typeToString(n.getType());
-	return new CompletionCandidate(name, type, null);
-    }
-
-    public String print(FieldDeclaration n) {
-	CompletionCandidate c = getCandidate(n);
-	if (c == null)
-	    return null;
-	return c.print();
-    }
-
-    public CompletionCandidate getCandidate(ConstructorDeclaration n) {
-	name = n.getName();
-
-	if (prefix.length() > 0 && !name.startsWith(prefix))
-	    return null;
-
-	type = "";
-
-	ArrayList<String> parameters = new ArrayList<String>();
-
-	if (n.getParameters() != null) {
-	    for(Parameter p:n.getParameters()) {
-		parameters.add(p.toString().split(" ")[0]);
-	    }
-	}
-
-	return new CompletionCandidate(name, type, parameters);
-    }
-
-    public String print(ConstructorDeclaration n) {
-	CompletionCandidate c = getCandidate(n);
-
-	if (c == null)
-	    return null;
-	return c.print();
-    }
-
-    public CompletionCandidate getCandidate(MethodDeclaration n) {
-	name = n.getName();
-
-	if (prefix.length() > 0 && !name.startsWith(prefix))
-	    return null;
-
-	type = typeToString(n.getType());
-
-	ArrayList<String> parameters = new ArrayList<String>();
-
-	if (n.getParameters() != null) {
-	    for(Parameter p:n.getParameters()) {
-		parameters.add(p.toString().split(" ")[0]);
-	    }
-	}
-
-	return new CompletionCandidate(name, type, parameters);
-    }
-
-    public String print(MethodDeclaration n) {
-	CompletionCandidate c = getCandidate(n);
-	if (c == null)
-	    return null;
-	return c.print();
     }
 
     public String printClassMembers(CtClass clazz) {
