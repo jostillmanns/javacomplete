@@ -340,12 +340,21 @@ public class JavaCompleteCompilationUnit {
     private void init(VariableDeclarationExpression v) {
 	String name;
 	String type = v.getType().toString();
+	// if (v.getType() instanceof ParameterizedType) {
+	//     ParameterizedType ptype = (ParameterizedType) v.getType();
+	//     ArrayList<String> types = new ArrayList<String>();
+
+	//     for(Object o:ptype.typeArguments()) {
+	//	types.add(((Type)o).toString());
+	//     }
+	// }
 	Integer begin = cu.getLineNumber(v.getParent().getStartPosition());
 	Integer end = cu.getLineNumber(v.getParent().getStartPosition() + v.getParent().getLength());
 
 	for(Object f:v.fragments()) {
 	    VariableDeclarationFragment fragment = (VariableDeclarationFragment)f;
 	    name = fragment.getName().toString();
+	    CompletionCandidate c = new CompletionCandidate(name,type,begin,end);
 	    variables.add(new CompletionCandidate(name, type, begin, end));
 	}
     }

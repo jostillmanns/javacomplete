@@ -5,9 +5,18 @@ import java.util.ArrayList;
 class CompletionCandidate {
     String name;
     String type;
+    String[] typeArguments;
     ArrayList<String> parameter;
     Integer scopeBegin;
     Integer scopeEnd;
+
+    public void setTypeArguments(String[] arr) {
+	typeArguments = arr;
+    }
+
+    public String[] getTypeArguments() {
+	return typeArguments;
+    }
 
     public Integer getScopeBegin() {
 	return scopeBegin;
