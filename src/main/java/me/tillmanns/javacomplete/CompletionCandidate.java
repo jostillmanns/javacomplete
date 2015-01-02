@@ -6,11 +6,28 @@ class CompletionCandidate {
     String name;
     String type;
     ArrayList<String> parameter;
+    Integer scopeBegin;
+    Integer scopeEnd;
+
+    public Integer getScopeBegin() {
+	return scopeBegin;
+    }
+
+    public Integer getScopeEnd() {
+	return scopeEnd;
+    }
 
     public CompletionCandidate(String name, String type, ArrayList<String> parameter) {
 	this.name = name;
 	this.type = type;
 	this.parameter = parameter;
+    }
+
+    public CompletionCandidate(String name, String type, Integer begin, Integer end) {
+	this.name = name;
+	this.type = type;
+	this.scopeBegin = begin;
+	this.scopeEnd = end;
     }
 
     public String getName() {
