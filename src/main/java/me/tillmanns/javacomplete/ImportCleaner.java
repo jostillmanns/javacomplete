@@ -25,16 +25,15 @@ public class ImportCleaner {
 	request.setExpression("");
 	request.setPrefix("");
 
-	InputStream in = new ByteArrayInputStream(request.getBuffer().getBytes());
-	importList = importsToClean(in);
+	importList = importsToClean(request.getBuffer());
 
 	Logger.debug("clean!");
     }
 
-    private String importsToClean(InputStream in) throws Exception {
+    private String importsToClean(String in) throws Exception {
 	StringBuilder typeList = new StringBuilder();
-	JavaCompleteCompilationUnit cu = new JavaCompleteCompilationUnit(in);	
-	
+	JavaCompleteCompilationUnit cu = new JavaCompleteCompilationUnit(in);
+
 	return "";
     }
 }
