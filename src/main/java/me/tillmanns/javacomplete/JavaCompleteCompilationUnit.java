@@ -23,6 +23,7 @@ import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.ForStatement;
+import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.IfStatement;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.LabeledStatement;
@@ -43,8 +44,8 @@ import org.eclipse.jdt.core.dom.TypeDeclarationStatement;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
-import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.WhileStatement;
+import org.eclipse.jdt.core.dom.ParameterizedType;
 
 public class JavaCompleteCompilationUnit {
     CompilationUnit cu;
@@ -195,11 +196,11 @@ public class JavaCompleteCompilationUnit {
 	if (o instanceof ExpressionStatement)
 	    init((ExpressionStatement)o);
 
-	if (o instanceof ForStatement)
-	    init((ForStatement)o);
-
 	if (o instanceof EnhancedForStatement)
 	    init((EnhancedForStatement)o);
+
+	if (o instanceof ForStatement)
+	    init((ForStatement)o);
 
 	if (o instanceof IfStatement)
 	    init((IfStatement)o);
@@ -224,13 +225,23 @@ public class JavaCompleteCompilationUnit {
 
 	if (o instanceof WhileStatement)
 	    init((WhileStatement)o);
+
+	if (o instanceof Block)
+	    init((Block)o);
     }
 
     private void init(Expression o) {
-	if (!(o instanceof VariableDeclarationExpression))
-	    return;
+	if (o instanceof VariableDeclarationExpression)
+	    init((VariableDeclarationExpression)o);
 
-	init((VariableDeclarationExpression)o);
+	if (o instanceof Assignment)
+	    init((Assignment)o);
+
+    }
+
+    private void init(Assignment o) {
+	init(o.getLeftHandSide());
+	init(o.getRightHandSide());
     }
 
     private void init(Block o) {
