@@ -5,332 +5,337 @@ import java.util.List;
 
 import java.io.InputStream;
 
-// external packages
-import japa.parser.JavaParser;
-import japa.parser.ast.CompilationUnit;
-import japa.parser.ast.visitor.VoidVisitorAdapter;
-
-// Ast body elements
-import japa.parser.ast.ImportDeclaration;
-import japa.parser.ast.body.MethodDeclaration;
-import japa.parser.ast.body.ConstructorDeclaration;
-import japa.parser.ast.body.BodyDeclaration;
-import japa.parser.ast.body.VariableDeclarator;
-import japa.parser.ast.body.VariableDeclaratorId;
-import japa.parser.ast.expr.VariableDeclarationExpr;
-import japa.parser.ast.body.Parameter;
-import japa.parser.ast.body.FieldDeclaration;
-import japa.parser.ast.body.TypeDeclaration;
-
-// Ast types
-import japa.parser.ast.type.ClassOrInterfaceType;
-import japa.parser.ast.type.ReferenceType;
-import japa.parser.ast.type.Type;
-import japa.parser.ast.type.VoidType;
-import japa.parser.ast.type.PrimitiveType;
-
-// Ast statements
-import japa.parser.ast.stmt.BlockStmt;
-
-import japa.parser.ParseException;
-
 import org.pmw.tinylog.Logger;
 
-public class JavaCompleteCompilationUnit {
-    CompilationUnit c;
+import org.eclipse.jdt.core.dom.AST;
+import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.AssertStatement;
+import org.eclipse.jdt.core.dom.Block;
+import org.eclipse.jdt.core.dom.BreakStatement;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.ConstructorInvocation;
+import org.eclipse.jdt.core.dom.ContinueStatement;
+import org.eclipse.jdt.core.dom.DoStatement;
+import org.eclipse.jdt.core.dom.EmptyStatement;
+import org.eclipse.jdt.core.dom.EnhancedForStatement;
+import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.ExpressionStatement;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
+import org.eclipse.jdt.core.dom.ForStatement;
+import org.eclipse.jdt.core.dom.IfStatement;
+import org.eclipse.jdt.core.dom.ImportDeclaration;
+import org.eclipse.jdt.core.dom.LabeledStatement;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.QualifiedName;
+import org.eclipse.jdt.core.dom.ReturnStatement;
+import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
+import org.eclipse.jdt.core.dom.Statement;
+import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
+import org.eclipse.jdt.core.dom.SwitchCase;
+import org.eclipse.jdt.core.dom.SwitchStatement;
+import org.eclipse.jdt.core.dom.SynchronizedStatement;
+import org.eclipse.jdt.core.dom.ThrowStatement;
+import org.eclipse.jdt.core.dom.TryStatement;
+import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.TypeDeclarationStatement;
+import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+import org.eclipse.jdt.core.dom.WhileStatement;
 
-    public JavaCompleteCompilationUnit(InputStream in) throws ParseException {
-	    c = JavaParser.parse(in);
+public class JavaCompleteCompilationUnit {
+    CompilationUnit cu;
+    private ArrayList<CompletionCandidate> fields = null;
+    private ArrayList<CompletionCandidate> methods = null;
+    private ArrayList<CompletionCandidate> variables = null;
+    private ArrayList<CompletionCandidate> imports = null;
+
+    public JavaCompleteCompilationUnit(String in) {
+	fields = new ArrayList<CompletionCandidate>();
+	methods = new ArrayList<CompletionCandidate>();
+	variables = new ArrayList<CompletionCandidate>();
+	imports = new ArrayList<CompletionCandidate>();
+
+	ASTParser parser = ASTParser.newParser(AST.JLS3);
+	parser.setSource(in.toCharArray());
+
+	cu = (CompilationUnit) parser.createAST(null);
+	for (Object i:cu.imports())
+	    init((ImportDeclaration)i);
+
+	for (Object o:cu.types()) {
+	    if (!(o instanceof TypeDeclaration))
+		continue;
+
+	    TypeDeclaration typeDeclaration = (TypeDeclaration) o;
+	    init(typeDeclaration.getFields());
+	    init(typeDeclaration.getMethods());
+	}
     }
 
     public String getPackage() {
-	if (c.getPackage() == null) {
-	    return null;
+	if (cu.getPackage() == null) {
+	    return "";
 	}
-	return c.getPackage().getName().toString();
+	return cu.getPackage().getName().toString();
     }
 
-    public ArrayList<ImportDeclaration> getImports() {
-	if (c.getImports() == null) {
-	    return new ArrayList<ImportDeclaration>();
+    public String getTypeOrNull(String name, Integer line) {
+	for (CompletionCandidate i:getImports()) {
+	    if (!i.getName().equals(name))
+		continue;
+
+	    return i.getType();
 	}
-	ArrayList<ImportDeclaration> imports = new ArrayList<ImportDeclaration>();
-	imports.addAll(c.getImports());
+
+	for (CompletionCandidate i:getFields()) {
+	    if (!i.getName().equals(name))
+		continue;
+
+	    return i.getType();
+	}
+
+	for (CompletionCandidate m:getMethods()) {
+	    if (!m.getName().equals(name))
+		continue;
+
+	    return m.getType();
+	}
+
+	for (CompletionCandidate v:getVariables()) {
+	    if (!(v.getScopeBegin() <= line && line <= v.getScopeEnd()))
+		continue;
+
+	    if (!v.getName().equals(name))
+		continue;
+
+	    return v.getType();
+	}
+
+	return null;
+    }
+
+    public ArrayList<CompletionCandidate> getMethods() {
+	return methods;
+    }
+
+    public ArrayList<CompletionCandidate> getFields() {
+	return fields;
+    }
+
+    public ArrayList<CompletionCandidate> getImports() {
 	return imports;
     }
 
-    public ArrayList<MethodDeclaration> getMethods() {
-	final ArrayList<MethodDeclaration> arr = new ArrayList<MethodDeclaration>();
-
-	class MethodVisitor extends VoidVisitorAdapter {
-	    @Override
-	    public void visit(MethodDeclaration n, Object arg) {
-		arr.add(n);
-
-		super.visit(n, arg);
-	    }
-	}
-
-	new MethodVisitor().visit(c, null);
-	return arr;
+    public ArrayList<CompletionCandidate> getVariables() {
+	return variables;
     }
 
-    public ArrayList<ConstructorDeclaration> getConstructors() {
-	final ArrayList<ConstructorDeclaration> arr = new ArrayList<ConstructorDeclaration>();
-
-	class ConstructorVisitor extends VoidVisitorAdapter {
-	    @Override
-	    public void visit(ConstructorDeclaration n, Object arg) {
-		arr.add(n);
-
-		super.visit(n, arg);
-	    }
-	}
-
-	new ConstructorVisitor().visit(c, null);
-	return arr;
+    private void init(ImportDeclaration o) {
+	String type = o.getName().toString();
+	String name = ((QualifiedName)o.getName()).getName().toString();
+	imports.add(new CompletionCandidate(name, type, null));
     }
 
-    public ConstructorDeclaration getConstructorOrNull(final Integer line) {
-	class ConstructorVisitor extends VoidVisitorAdapter {
-	    public ConstructorDeclaration m = null;
-
-	    @Override
-	    public void visit(ConstructorDeclaration n, Object arg) {
-		if(n.getBeginLine() <= line && line <= n.getEndLine()) {
-		    m = n;
-		}
-
-		if (m == null) {
-		    super.visit(n, arg);
-		}
+    private void init(FieldDeclaration[] arr) {
+	String name;
+	String type;
+	for(FieldDeclaration f:arr) {
+	    type = f.getType().toString();
+	    for (Object o:f.fragments()) {
+		name = ((VariableDeclarationFragment) o).getName().toString();
+		fields.add(new CompletionCandidate(name, type, null));
 	    }
 	}
-
-	ConstructorVisitor mv = new ConstructorVisitor();
-	mv.visit(c, null);
-	return mv.m;
     }
 
-    public MethodDeclaration getMethodOrNull(final Integer line) {
-	class MethodVisitor extends VoidVisitorAdapter {
-	    public MethodDeclaration m = null;
+    private void init(SingleVariableDeclaration o) {
+	String name = o.getName().toString();
+	String type = o.getType().toString();
+	Integer begin = cu.getLineNumber(o.getParent().getStartPosition());
+	Integer end = cu.getLineNumber(o.getParent().getStartPosition() + o.getParent().getLength());
 
-	    @Override
-	    public void visit(MethodDeclaration n, Object arg) {
-		if(n.getBeginLine() <= line && line <= n.getEndLine()) {
-		    m = n;
-		}
+	variables.add(new CompletionCandidate(name, type, begin, end));
+    }
 
-		if (m == null) {
-		    super.visit(n, arg);
+    private void init(MethodDeclaration[] arr) {
+	String name;
+	String type;
+
+	for(MethodDeclaration m:arr) {
+	    type = "";
+	    if (!m.isConstructor())
+		type = m.getReturnType2().toString();
+	    name = m.getName().toString();
+
+	    ArrayList<String> parameters = new ArrayList<String>();
+
+	    if (m.parameters() != null) {
+		for(Object p:m.parameters()) {
+		    SingleVariableDeclaration s = (SingleVariableDeclaration)p;
+		    init(s);
+		    parameters.add(s.getType().toString());
 		}
 	    }
-	}
 
-	MethodVisitor mv = new MethodVisitor();
-	mv.visit(c, null);
-	return mv.m;
+	    methods.add(new CompletionCandidate(name,type,parameters));
+	    Block body = m.getBody();
+	    for(Object s:body.statements())
+		initStatement((Statement)s);
+	}
     }
 
-    public ArrayList<BlockStmt> getBlockStatements(BodyDeclaration m) {
-	if (m instanceof MethodDeclaration)
-	    return getBlockStatements((MethodDeclaration)m);
+    private void initStatement(Statement o) {
+	if (o instanceof DoStatement)
+	    init((DoStatement)o);
 
-	return getBlockStatements((ConstructorDeclaration)m);
+	if (o instanceof ExpressionStatement)
+	    init((ExpressionStatement)o);
+
+	if (o instanceof ForStatement)
+	    init((ForStatement)o);
+
+	if (o instanceof EnhancedForStatement)
+	    init((EnhancedForStatement)o);
+
+	if (o instanceof IfStatement)
+	    init((IfStatement)o);
+
+	if (o instanceof LabeledStatement)
+	    init((LabeledStatement)o);
+
+	if (o instanceof ReturnStatement)
+	    init((ReturnStatement)o);
+
+	if (o instanceof SuperConstructorInvocation)
+	    init((SuperConstructorInvocation)o);
+
+	if (o instanceof SwitchCase)
+	    init((SwitchCase)o);
+
+	if (o instanceof SwitchStatement)
+	    init((SwitchStatement)o);
+
+	if (o instanceof VariableDeclarationStatement)
+	    init((VariableDeclarationStatement)o);
+
+	if (o instanceof WhileStatement)
+	    init((WhileStatement)o);
     }
 
-    public ArrayList<BlockStmt> getBlockStatements(MethodDeclaration m) {
-	final ArrayList<BlockStmt> arr = new ArrayList<BlockStmt>();
+    private void init(Expression o) {
+	if (!(o instanceof VariableDeclarationExpression))
+	    return;
 
-	class BlockStmtVisitor extends VoidVisitorAdapter {
-	    @Override
-	    public void visit(BlockStmt n, Object arg) {
-		arr.add(n);
-		super.visit(n, arg);
-	    }
-	}
-
-	new BlockStmtVisitor().visit(m, null);
-	return arr;
+	init((VariableDeclarationExpression)o);
     }
 
-    public ArrayList<BlockStmt> getBlockStatements(ConstructorDeclaration m) {
-	final ArrayList<BlockStmt> arr = new ArrayList<BlockStmt>();
-
-	class BlockStmtVisitor extends VoidVisitorAdapter {
-	    @Override
-	    public void visit(BlockStmt n, Object arg) {
-		arr.add(n);
-		super.visit(n, arg);
-	    }
-	}
-
-	new BlockStmtVisitor().visit(m, null);
-	return arr;
+    private void init(Block o) {
+	for (Object s:o.statements())
+	    initStatement((Statement)s);
     }
 
-    public ArrayList<VariableDeclarationExpr> getVariables(final BodyDeclaration m, final Integer l) {
-	final ArrayList<VariableDeclarationExpr> arr = new ArrayList<VariableDeclarationExpr>();
-	final ArrayList<BlockStmt> blocks = new ArrayList<BlockStmt>();
+    private void init(VariableDeclarationStatement v) {
+	String name;
+	String type = v.getType().toString();
+	Integer begin = cu.getLineNumber(v.getParent().getStartPosition());
+	Integer end = cu.getLineNumber(v.getParent().getStartPosition() + v.getParent().getLength());
 
-	if (m instanceof MethodDeclaration) {
-	    blocks.addAll(getBlockStatements((MethodDeclaration)m));
+	for(Object f:v.fragments()) {
+	    VariableDeclarationFragment fragment = (VariableDeclarationFragment)f;
+	    name = fragment.getName().toString();
+	    variables.add(new CompletionCandidate(name, type, begin, end));
 	}
-
-	if (m instanceof ConstructorDeclaration) {
-
-	    blocks.addAll(getBlockStatements((ConstructorDeclaration)m));
-	}
-
-
-	class VariableDeclarationExprVisitor extends VoidVisitorAdapter {
-	    @Override
-	    public void visit(VariableDeclarationExpr n, Object arg) {
-		// --- check the scope of the variable
-		// find the block, the variable is directly nested in
-		BlockStmt blockstmt = null;
-		for(BlockStmt b:blocks) {
-		    if(b.getBeginLine() <= n.getBeginLine() && n.getEndLine() <= b.getEndLine()) {
-			blockstmt = b;
-		    }
-		}
-
-		// check if i am inside that block
-		if (blockstmt.getBeginLine() <= l && l <= blockstmt.getEndLine()) {
-		    arr.add(n);
-		}
-		super.visit(n, arg);
-	    }
-	}
-
-	if (m instanceof MethodDeclaration) {
-	    new VariableDeclarationExprVisitor().visit((MethodDeclaration) m, null);
-	}
-
-	if (m instanceof ConstructorDeclaration) {
-	    new VariableDeclarationExprVisitor().visit((ConstructorDeclaration) m, null);
-	}
-
-	return arr;
     }
 
-    public ArrayList<Parameter> getParameters(BodyDeclaration m) {
-	final ArrayList<Parameter> arr = new ArrayList<Parameter>();
-
-	class ParameterVisitor extends VoidVisitorAdapter {
-	    @Override
-	    public void visit(Parameter n, Object arg) {
-		arr.add(n);
-		super.visit(n, arg);
-	    }
-	}
-
-	if (m instanceof MethodDeclaration) {
-	    new ParameterVisitor().visit((MethodDeclaration) m, null);
-	}
-
-	if (m instanceof ConstructorDeclaration) {
-	    new ParameterVisitor().visit((ConstructorDeclaration) m, null);
-	}
-
-	return arr;
+    private void init(DoStatement o) {
+	initStatement(o.getBody());
+	init(o.getExpression());
     }
 
-    private ClassOrInterfaceType castType(Type t) {
-	if (t instanceof ReferenceType) {
-	    return (ClassOrInterfaceType) ((ReferenceType) t).getType();
-	}
-
-	if (t instanceof ClassOrInterfaceType) {
-	    return (ClassOrInterfaceType) ((ReferenceType) t).getType();
-	}
-
-	return null;
+    private void init(ExpressionStatement o) {
+	init(o.getExpression());
     }
 
-    public ClassOrInterfaceType getTypeOrNull(String name, Integer line) {
-	for(MethodDeclaration m:getMethods()) {
-	    if (!m.getName().equals(name)) {
-		continue;
-	    }
-	    return castType(m.getType());
-	}
-	MethodDeclaration m = getMethodOrNull(line);
-	ConstructorDeclaration c = getConstructorOrNull(line);
-
-	// Field Type
-	for(FieldDeclaration f:getFields()) {
-	    VariableDeclarator v = f.getVariables().get(0);
-	    VariableDeclaratorId id = v.getId();
-
-	    if (!id.getName().equals(name))
-		continue;
-
-	    return castType(f.getType());
-	}
-
-	// if we are not inside a method we only return fields
-	if (m == null && c == null) {
-	    return null;
-	}
-
-	// Method Variable
-	for(VariableDeclarationExpr vexpr:getVariables(m, line)) {
-	    VariableDeclarator v = vexpr.getVars().get(0);
-	    VariableDeclaratorId id = v.getId();
-
-	    if (!id.getName().equals(name))
-		continue;
-	    return castType(vexpr.getType());
-	}
-
-	for(VariableDeclarationExpr vexpr:getVariables(c, line)) {
-	    VariableDeclarator v = vexpr.getVars().get(0);
-	    VariableDeclaratorId id = v.getId();
-
-	    if (!id.getName().equals(name))
-		continue;
-	    return castType(vexpr.getType());
-	}
-
-	for(Parameter p:getParameters(m)) {
-	    VariableDeclaratorId id = p.getId();
-
-	    if (!id.getName().equals(name))
-		continue;
-
-	    return castType(p.getType());
-	}
-
-	for(Parameter p:getParameters(c)) {
-	    VariableDeclaratorId id = p.getId();
-
-	    if (!id.getName().equals(name))
-		continue;
-
-	    return castType(p.getType());
-	}
-
-	return null;
+    private void init(EnhancedForStatement o) {
+	init(o.getParameter());
+	init(o.getExpression());
+	initStatement(o.getBody());
     }
 
-    public ArrayList<FieldDeclaration> getFields() {
-	final ArrayList<FieldDeclaration> arr = new ArrayList<FieldDeclaration>();
+    private void init(ForStatement o) {
+	for(Object v:o.initializers())
+	    init((VariableDeclarationExpression)v);
 
-	class FieldDeclarationVisitor extends VoidVisitorAdapter {
-	    @Override
-	    public void visit(FieldDeclaration n, Object arg) {
-		arr.add(n);
-		super.visit(n, arg);
-	    }
-	}
+	for(Object v:o.updaters())
+	    init((Expression)v);
 
-	new FieldDeclarationVisitor().visit(c, null);
-	return arr;
+	init(o.getExpression());
+
+	initStatement(o.getBody());
     }
 
-    public TypeDeclaration getType() {
-	return c.getTypes().get(0);
+    private void init(IfStatement o) {
+	initStatement(o.getThenStatement());
+	initStatement(o.getElseStatement());
+	init(o.getExpression());
+    }
+
+    private void init(LabeledStatement o) {
+	initStatement(o.getBody());
+    }
+
+    private void init(ReturnStatement o) {
+	init(o.getExpression());
+    }
+
+    private void init(SuperConstructorInvocation o) {
+	init(o.getExpression());
+    }
+
+    private void init(SwitchCase o) {
+	init(o.getExpression());
+    }
+
+    private void init(SwitchStatement o) {
+	for(Object s:o.statements())
+	    initStatement((Statement) o);
+
+	init(o.getExpression());
+    }
+
+    private void init(SynchronizedStatement o) {
+	initStatement(o.getBody());
+	init(o.getExpression());
+    }
+
+    private void init(ThrowStatement o) {
+	init(o.getExpression());
+    }
+
+    private void init(TryStatement o) {
+	init(o.getBody());
+	init(o.getFinally());
+    }
+
+    private void init(WhileStatement o) {
+	initStatement(o.getBody());
+	init(o.getExpression());
+    }
+
+    private void init(VariableDeclarationExpression v) {
+	String name;
+	String type = v.getType().toString();
+	Integer begin = cu.getLineNumber(v.getParent().getStartPosition());
+	Integer end = cu.getLineNumber(v.getParent().getStartPosition() + v.getParent().getLength());
+
+	for(Object f:v.fragments()) {
+	    VariableDeclarationFragment fragment = (VariableDeclarationFragment)f;
+	    name = fragment.getName().toString();
+	    variables.add(new CompletionCandidate(name, type, begin, end));
+	}
     }
 }
