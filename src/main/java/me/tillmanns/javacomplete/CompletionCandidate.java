@@ -43,6 +43,11 @@ class CompletionCandidate {
     }
 
     public String print() {
+	if (name == null)
+	    name = "";
+	if (type == null)
+	    type = "";
+	
 	String result = String.format("%s!%s!", name, type);
 
 	if (parameter == null)
