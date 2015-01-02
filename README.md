@@ -36,23 +36,23 @@ planed features are
 
 # Builds<a id="sec-2" name="sec-2"></a>
 
-available on [tillmanns.me](http://javacomplete.tillmanns.me/)
+available on [javacomplete.tillmanns.me](http://javacomplete.tillmanns.me/)
 
 # Setup<a id="sec-3" name="sec-3"></a>
 
 The application currently holds dependencies on the following packages:
 
--   javaparser [code.google.com/p/javaparser/](https://code.google.com/p/javaparser/)
+-   <del>javaparser [code.google.com/p/javaparser/](https://code.google.com/p/javaparser/)</del>
+-   eclipse AST Parser [eclipse.org/jdt/core](http://eclipse.org/jdt/core/)
 -   javassist [javassist.ortg](http://www.csg.ci.i.u-tokyo.ac.jp/~chiba/javassist/)
 -   tinlylog [www.tinylog.org/](http://www.tinylog.org/)
 -   junixsocket [code.google.com/p/junixsocket/](https://code.google.com/p/junixsocket/)
 -   jsonp [jsonp.java.net/](https://jsonp.java.net/)
 
-I am planning to replace javaparser with the eclipse astparser on
-the long run (mostly to support java 8) but for now it serves me
-well. To compile javacomplete with the provided gradle build file
-all these dependencies need to be saved to the libs/ dirctory in the
-project root.
+I recently switched to the eclipse ASTParser, which allows to
+complete from intact code leafs inside the ast code tree. All the
+dependencies, including the eclipse parser will be downloaded
+automatically using the maven central repository.
 
 ## Junixsocket native lib<a id="sec-3-1" name="sec-3-1"></a>
 
@@ -78,8 +78,8 @@ Dependencies may be referenced using the JAVACOMPLETPATH variable
 example call:
 
     JAVASRC=/usr/lib/jvm/java-7-openjdk/src.zip \
-         JAVACOMPLETEPATH=build/libs/javacomplete-all-0.1.0.jar \
-         java -jar build/libs/javacomplete-all-0.1.0.jar
+	 JAVACOMPLETEPATH=build/libs/javacomplete-all-0.1.0.jar \
+	 java -jar build/libs/javacomplete-all-0.1.0.jar
 
 ## Emacs setup<a id="sec-3-3" name="sec-3-3"></a>
 
