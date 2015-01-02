@@ -8,7 +8,8 @@ public enum Regexp {
     REDUNDANT_KEYWORD ("(final|return|case|public|private|protected)\\s*(\\w*)", 2),
     LIST ("(\\w*,)+(\\w*)",2 ),
     NEW_STATEMENT ("\\s*(new)\\s*$", -1),
-    THIS_STATEMENT ("^(this\\.)(.*)", 2);
+    THIS_STATEMENT ("^(this\\.)(.*)", 2),
+    ENHANCED_FOR_EXPRESSION ("^(\\w*) (\\w*):$", -1);
 
     private final String regexp;
     private final int id;
