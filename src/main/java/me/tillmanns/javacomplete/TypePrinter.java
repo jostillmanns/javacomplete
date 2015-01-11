@@ -26,7 +26,7 @@ class TypePrinter {
     }
 
     public String print(CompletionCandidate v) {
-	if(prefix.length() > 0 && !v.getName().startsWith(prefix))
+	if(prefix.length() > 0 && !v.getName().toLowerCase().startsWith(prefix.toLowerCase()))
 	    return null;
 
 	return v.print();
@@ -113,7 +113,7 @@ class TypePrinter {
 
 	    name = m.getName();
 
-	    if (!name.startsWith(request.getPrefix()))
+	    if (!name.toLowerCase().startsWith(request.getPrefix().toLowerCase()))
 		continue;
 
 	    try {
@@ -141,7 +141,7 @@ class TypePrinter {
 
 	    name = f.getName();
 
-	    if (!name.startsWith(request.getPrefix()))
+	    if (!name.toLowerCase().startsWith(request.getPrefix().toLowerCase()))
 		continue;
 
 	    try {
