@@ -47,8 +47,10 @@ public class Complete {
 	} catch (NullPointerException e) {
 	    Logger.trace(e);
 	} finally {
-	    out.write("".getBytes());
-	    out.close();
+	    if (out != null) {
+		out.write("0\n".getBytes());
+		out.close();
+	    }
 	}
     }
 
