@@ -38,6 +38,9 @@ planed features are
 
 available on [javacomplete.tillmanns.me](http://javacomplete.tillmanns.me/)
 
+the builds may contain already closed issues, I recommend building
+the software from source using gradle.
+
 # Setup<a id="sec-3" name="sec-3"></a>
 
 The application currently holds dependencies on the following packages:
