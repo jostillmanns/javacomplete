@@ -11,8 +11,10 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.AssertStatement;
+import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.BreakStatement;
+import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ConstructorInvocation;
 import org.eclipse.jdt.core.dom.ContinueStatement;
@@ -23,11 +25,11 @@ import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.ForStatement;
-import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.IfStatement;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.LabeledStatement;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
@@ -45,7 +47,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.WhileStatement;
-import org.eclipse.jdt.core.dom.ParameterizedType;
+import org.eclipse.jdt.core.dom.SimpleType;
 
 public class JavaCompleteCompilationUnit {
     CompilationUnit cu;
@@ -141,35 +143,67 @@ public class JavaCompleteCompilationUnit {
 	imports.add(new CompletionCandidate(name, type, null));
     }
 
+    private String getType(Type type) {
+	if (!(type instanceof ParameterizedType))
+	    return type.toString();
+
+	ParameterizedType ptype = (ParameterizedType) type;
+	return ptype.getType().toString();
+    }
+
+    private String[] getTypeArguments(Type type) {
+	if (!(type instanceof ParameterizedType))
+	    return null;
+
+	ParameterizedType ptype = (ParameterizedType) type;
+	String[] types = new String[ptype.typeArguments().size()];
+	for (int i = 0; i < types.length; i++) {
+	    types[i] = ((SimpleType)(ptype.typeArguments().get(i))).getName().toString();
+	}
+
+	return types;
+    }
+
     private void init(FieldDeclaration[] arr) {
 	String name;
 	String type;
+	String[] typearguments;
+	CompletionCandidate c;
 	for(FieldDeclaration f:arr) {
-	    type = f.getType().toString();
+	    type = getType(f.getType());
 	    for (Object o:f.fragments()) {
 		name = ((VariableDeclarationFragment) o).getName().toString();
-		fields.add(new CompletionCandidate(name, type, null));
+		c = new CompletionCandidate(name, type, null);
+		c.setTypeArguments(getTypeArguments(f.getType()));
+		fields.add(c);
 	    }
 	}
     }
 
     private void init(SingleVariableDeclaration o) {
 	String name = o.getName().toString();
-	String type = o.getType().toString();
+	String type = getType(o.getType());
+	String[] typeArguments = getTypeArguments(o.getType());
 	Integer begin = cu.getLineNumber(o.getParent().getStartPosition());
 	Integer end = cu.getLineNumber(o.getParent().getStartPosition() + o.getParent().getLength());
 
-	variables.add(new CompletionCandidate(name, type, begin, end));
+	CompletionCandidate c = new CompletionCandidate(name, type, begin, end);
+	c.setTypeArguments(typeArguments);
+	variables.add(c);
     }
 
     private void init(MethodDeclaration[] arr) {
 	String name;
 	String type;
+	String[] typeArguments = null;
 
 	for(MethodDeclaration m:arr) {
 	    type = "";
-	    if (!m.isConstructor())
-		type = m.getReturnType2().toString();
+	    if (!m.isConstructor()) {
+		type = getType(m.getReturnType2());
+		typeArguments = getTypeArguments(m.getReturnType2());
+	    }
+
 	    name = m.getName().toString();
 
 	    ArrayList<String> parameters = new ArrayList<String>();
@@ -182,7 +216,9 @@ public class JavaCompleteCompilationUnit {
 		}
 	    }
 
-	    methods.add(new CompletionCandidate(name,type,parameters));
+	    CompletionCandidate c = new CompletionCandidate(name,type,parameters);
+	    c.setTypeArguments(typeArguments);
+	    methods.add(c);
 	    Block body = m.getBody();
 	    for(Object s:body.statements())
 		initStatement((Statement)s);
@@ -251,14 +287,18 @@ public class JavaCompleteCompilationUnit {
 
     private void init(VariableDeclarationStatement v) {
 	String name;
-	String type = v.getType().toString();
+	String type = getType(v.getType());
+	String[] typeArguments = getTypeArguments(v.getType());
 	Integer begin = cu.getLineNumber(v.getParent().getStartPosition());
 	Integer end = cu.getLineNumber(v.getParent().getStartPosition() + v.getParent().getLength());
+	CompletionCandidate c;
 
 	for(Object f:v.fragments()) {
 	    VariableDeclarationFragment fragment = (VariableDeclarationFragment)f;
 	    name = fragment.getName().toString();
-	    variables.add(new CompletionCandidate(name, type, begin, end));
+	    c = new CompletionCandidate(name, type, begin, end);
+	    c.setTypeArguments(typeArguments);
+	    variables.add(c);
 	}
     }
 
@@ -339,15 +379,8 @@ public class JavaCompleteCompilationUnit {
 
     private void init(VariableDeclarationExpression v) {
 	String name;
-	String type = v.getType().toString();
-	// if (v.getType() instanceof ParameterizedType) {
-	//     ParameterizedType ptype = (ParameterizedType) v.getType();
-	//     ArrayList<String> types = new ArrayList<String>();
-
-	//     for(Object o:ptype.typeArguments()) {
-	//	types.add(((Type)o).toString());
-	//     }
-	// }
+	String type = getType(v.getType());
+	String[] typeArguments = getTypeArguments(v.getType());
 	Integer begin = cu.getLineNumber(v.getParent().getStartPosition());
 	Integer end = cu.getLineNumber(v.getParent().getStartPosition() + v.getParent().getLength());
 
@@ -355,7 +388,8 @@ public class JavaCompleteCompilationUnit {
 	    VariableDeclarationFragment fragment = (VariableDeclarationFragment)f;
 	    name = fragment.getName().toString();
 	    CompletionCandidate c = new CompletionCandidate(name,type,begin,end);
-	    variables.add(new CompletionCandidate(name, type, begin, end));
+	    c.setTypeArguments(typeArguments);
+	    variables.add(c);
 	}
     }
 }
